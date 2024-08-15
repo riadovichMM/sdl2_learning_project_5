@@ -3,6 +3,7 @@
 #include "./map_class.hpp"
 #include "./camera.hpp"
 #include "./human.hpp"
+#include <vector>
 
 class Main {
     public:
@@ -25,6 +26,7 @@ class Main {
         int frame_count;
         Map* map;
         Camera* camera;
-        Human* human;
+        std::vector<Human> humans;
+        int id_count;
 };
 

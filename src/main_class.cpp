@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include "../include/SDL2/SDL.h"
 #include "./header_files/main_class.hpp"
 #include "./header_files/map_class.hpp"
@@ -23,14 +24,13 @@ void Main::init(const char* title, int x_pos, int y_pos, int screen_width, int s
 
     this->camera = new Camera(screen_width, screen_height, tile_width, tile_height, matrix_rows, matrix_cols);
     this->map = new Map(this->ptr_renderer, this->camera, matrix_rows, matrix_cols);
-    this->human = new Human(this->ptr_renderer, this->camera, 100, 100);
+    this->id_count = 0;
 }
 
 
 void Main::clean() {
     delete this->map;
     delete this->camera;
-    delete this->human;
 
     SDL_DestroyRenderer(this->ptr_renderer);
     SDL_DestroyWindow(this->ptr_window);
@@ -44,6 +44,20 @@ void Main::handle_event() {
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) {
             this->run_loop = false;
+        }
+
+        if (event.type == SDL_MOUSEBUTTONDOWN) {
+            this->id_count++;
+            if (event.button.button == SDL_BUTTON_LEFT) {
+                std::cout << event.button.x << " " << event.button.y << std::endl;
+                Human human(this->ptr_renderer, this->camera, event.button.x - this->camera->x, event.button.y - this->camera->y, 0,this->id_count, &humans);
+                this->humans.push_back(human);
+            }
+            if (event.button.button == SDL_BUTTON_RIGHT) {
+                std::cout << event.button.x << " " << event.button.y << std::endl;
+                Human human(this->ptr_renderer, this->camera, event.button.x - this->camera->x, event.button.y - this->camera->y, 1, this->id_count, &humans);
+                this->humans.push_back(human);
+            }
         }
     }
 
@@ -71,7 +85,10 @@ void Main::update_state() {
     this->camera->update_state();
 
     this->map->update_state();
-    this->human->update_state();
+
+    for (int i = 0; i < humans.size(); i++) {
+        this->humans[i].update_state();
+    }
 }
 
 void Main::render() {
@@ -79,7 +96,10 @@ void Main::render() {
     SDL_RenderClear(this->ptr_renderer);
 
     this->map->render();
-    this->human->render();
+
+    for (int i = 0; i < humans.size(); i++) {
+        this->humans[i].render();
+    }
 
     SDL_RenderPresent(this->ptr_renderer);
 }
@@ -87,16 +107,24 @@ void Main::render() {
 
 void Main::game_loop() {
     while(this->run_loop) {
+        Uint32 start = SDL_GetTicks();
         this->frame_count++;
 
         this->handle_event();
 
         if (this->frame_count == 100) {
             this->update_state();
-            this->frame_count = 0;
         }
 
         this->render();
+        if (this->frame_count == 100) {
+            Uint32 delta = SDL_GetTicks() - start;
+            if (delta > 0) {
+                float fps = (1000.0f / delta);
+                std::cout << fps << " " << this->humans.size() << std::endl;
+            }
+            this->frame_count = 0;
+        }
     }
 }
 
